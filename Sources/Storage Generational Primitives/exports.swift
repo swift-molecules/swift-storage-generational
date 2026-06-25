@@ -9,6 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-// MARK: - Test Support spine ([MOD-024])
-@_exported public import Storage_Arena_Primitives
-@_exported public import Storage_Primitives_Test_Support
+// Re-export the namespace + the pool allocator tier, so a consumer spelling
+// `Storage<Memory.Allocator<Memory.Heap>.Pool>.Generational<Element>` gets every token by importing
+// this one module.
+
+@_exported public import Memory_Allocator_Pool_Primitives
+@_exported public import Memory_Allocator_Primitive
+@_exported public import Memory_Heap_Primitives
+@_exported public import Storage_Primitive

@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-storage-arena-primitives",
+    name: "swift-storage-generational-primitives",
     platforms: [
         .macOS(.v26),
         .iOS(.v26),
@@ -12,49 +12,48 @@ let package = Package(
         .visionOS(.v26)
     ],
     products: [
-        .library(name: "Storage Arena Primitives", targets: ["Storage Arena Primitives"]),
-        .library(name: "Storage Arena Primitives Test Support", targets: ["Storage Arena Primitives Test Support"]),
+        // MARK: - Generational (the un-fused Storage.Arena: generation tokens over a Pool)
+        .library(name: "Storage Generational Primitives", targets: ["Storage Generational Primitives"]),
     ],
     dependencies: [
-        .package(path: "../swift-storage-primitives"),
-        .package(path: "../swift-index-primitives"),
-        .package(path: "../swift-memory-primitives"),
-        .package(path: "../swift-memory-arena-primitives"),
-        .package(path: "../swift-property-primitives"),
-        .package(path: "../swift-finite-primitives"),
+        .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ordinal-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
     ],
     targets: [
+
+        // MARK: - Generational discipline
         .target(
-            name: "Storage Arena Primitives",
+            name: "Storage Generational Primitives",
             dependencies: [
                 .product(name: "Storage Primitive", package: "swift-storage-primitives"),
-                .product(name: "Storage Error Primitives", package: "swift-storage-primitives"),
-                .product(name: "Storage Initialization Primitives", package: "swift-storage-primitives"),
-                .product(name: "Storage Accessor Primitives", package: "swift-storage-primitives"),
+                .product(name: "Store Primitive", package: "swift-storage-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-storage-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
+                .product(name: "Ordinal Primitive", package: "swift-ordinal-primitives"),
+                .product(name: "Ordinal Primitives Standard Library Integration", package: "swift-ordinal-primitives"),
+                .product(name: "Memory Primitive", package: "swift-memory-primitives"),
                 .product(name: "Memory Address Primitives", package: "swift-memory-primitives"),
                 .product(name: "Memory Alignment Primitives", package: "swift-memory-primitives"),
-                .product(name: "Memory Contiguous Primitives", package: "swift-memory-primitives"),
-                .product(name: "Memory Primitives Standard Library Integration", package: "swift-memory-primitives"),
-                .product(name: "Memory Arena Primitives", package: "swift-memory-arena-primitives"),
-                .product(name: "Property Primitives", package: "swift-property-primitives"),
-                .product(name: "Finite Primitives", package: "swift-finite-primitives"),
+                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
+                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
+                .product(name: "Memory Allocator Pool Primitives", package: "swift-memory-allocation-primitives"),
             ]
         ),
-        .target(
-            name: "Storage Arena Primitives Test Support",
-            dependencies: [
-                "Storage Arena Primitives",
-                .product(name: "Storage Primitives Test Support", package: "swift-storage-primitives"),
-            ],
-            path: "Tests/Support"
-        ),
+
+        // MARK: - Tests
         .testTarget(
-            name: "Storage Arena Primitives Tests",
+            name: "Storage Generational Primitives Tests",
             dependencies: [
-                "Storage Arena Primitives",
-                "Storage Arena Primitives Test Support",
-                .product(name: "Storage Primitives Test Support", package: "swift-storage-primitives"),
+                "Storage Generational Primitives",
+                .product(name: "Buffer Primitives Test Support", package: "swift-buffer-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-storage-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
             ]
         ),
     ],

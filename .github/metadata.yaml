@@ -1,0 +1,9 @@
+# .github/metadata.yaml
+description: "A generation-token slotmap with stable (index, generation) handles over a pooled allocation that reject access after a slot is freed and reused."
+topics:
+  - primitives
+  - storage
+  - slotmap
+homepage: "https://swift-institute.org"
+readme:
+  family: E
