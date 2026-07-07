@@ -41,12 +41,6 @@ private typealias Handle = Store.Generational.Handle
 // MARK: - The reference model: the ledger as plain value state
 
 private struct Reference {
-    struct Slot {
-        var occupied = false
-        var generation = 0
-        var id: Int? = nil
-    }
-
     var slots: [Slot]
     var live: [(handle: Handle, id: Int)] = []
     /// Staled handles (by remove/seam-move/removeAll), kept bounded; entries
@@ -55,6 +49,14 @@ private struct Reference {
 
     init(capacity: Int) {
         self.slots = Swift.Array(repeating: Slot(), count: capacity)
+    }
+}
+
+extension Reference {
+    struct Slot {
+        var occupied = false
+        var generation = 0
+        var id: Int? = nil
     }
 
     var capacity: Int { slots.count }
@@ -149,7 +151,9 @@ private struct TrivialStream: ~Copyable {
         self.rng = rng
         self.verdict = Model.Verdict(seed: seed)
     }
+}
 
+extension TrivialStream {
     mutating func insertNew() {
         let id = nextID
         nextID += 1
@@ -330,7 +334,9 @@ private struct RefcountedStream: ~Copyable {
         self.verdict = Model.Verdict(seed: seed)
         self.census = census
     }
+}
 
+extension RefcountedStream {
     mutating func insertNew() {
         let id = nextID
         nextID += 1
@@ -489,7 +495,9 @@ private struct MoveOnlyStream: ~Copyable {
         self.verdict = Model.Verdict(seed: seed)
         self.census = census
     }
+}
 
+extension MoveOnlyStream {
     mutating func insertNew() {
         let id = nextID
         nextID += 1

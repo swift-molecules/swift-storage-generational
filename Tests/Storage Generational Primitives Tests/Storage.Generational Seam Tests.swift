@@ -16,7 +16,7 @@ private typealias Slots<E: ~Copyable> =
 // MARK: - [DS-024]: the generational column is lawful (fresh-pool order is dense)
 
 @Suite
-struct GenerationalSeamLawTests {
+struct `Generational Seam Law Tests` {
 
     @Test
     func `the generational column obeys the seam ledger laws`() {
@@ -42,7 +42,7 @@ struct GenerationalSeamLawTests {
 // MARK: - The positional seam against the handle surface
 
 @Suite
-struct GenerationalSeamTests {
+struct `Generational Seam Tests` {
 
     @Test
     func `positional move vacates the slot and stales outstanding handles`() {
@@ -80,7 +80,7 @@ struct GenerationalSeamTests {
 // MARK: - The generation-preserving clone (sibling handles survive a CoW detach)
 
 @Suite
-struct GenerationalCloneTests {
+struct `Generational Clone Tests` {
 
     @Test
     func `clone preserves indices, occupancy, AND generations — live and stale alike`() {

@@ -33,11 +33,16 @@ private final class Item: @unchecked Sendable {
         self.id = id
         self.value = value
     }
-    func bump() { value += 1 }
     deinit { Probe.recordDestroy(id) }
 }
 
-private enum Probe {
+extension Item {
+    func bump() { value += 1 }
+}
+
+private enum Probe {}
+
+extension Probe {
     nonisolated(unsafe) static var _destroyed: [Int] = []
     static func reset() { unsafe _destroyed = [] }
     static func recordDestroy(_ id: Int) { unsafe _destroyed.append(id) }
@@ -46,7 +51,7 @@ private enum Probe {
 }
 
 @Suite(.serialized)
-struct StorageGenerationalTests {
+struct `Storage Generational Tests` {
 
     @Test
     func `grow preserves the incarnation history — live handles resolve, stale stay stale`() {
@@ -82,7 +87,7 @@ struct StorageGenerationalTests {
     }
 
     @Test
-    func insertContainsSubscript() {
+    func `insert Contains Subscript`() {
         Probe.reset()
         var s = Slots<Item>.create(slotCapacity: 4)
         let h = s.insert(Item(1, value: 10))
@@ -98,7 +103,7 @@ struct StorageGenerationalTests {
     }
 
     @Test
-    func removeReturnsElementAndStalesHandle() {
+    func `remove Returns Element And Stales Handle`() {
         Probe.reset()
         var s = Slots<Item>.create(slotCapacity: 4)
         let h = s.insert(Item(7, value: 70))
@@ -119,7 +124,7 @@ struct StorageGenerationalTests {
     }
 
     @Test
-    func reuseAfterRemoveStalesOldHandle() {
+    func `reuse After Remove Stales Old Handle`() {
         Probe.reset()
         var s = Slots<Item>.create(slotCapacity: 2)
         let h1 = s.insert(Item(1, value: 10))
@@ -134,7 +139,7 @@ struct StorageGenerationalTests {
     }
 
     @Test
-    func teardownDestroysOccupiedOnce() {
+    func `teardown Destroys Occupied Once`() {
         Probe.reset()
         do {
             var s = Slots<Item>.create(slotCapacity: 8)
@@ -149,7 +154,7 @@ struct StorageGenerationalTests {
 
 // MARK: - The Position-decode door (Round M B2 spike)
 
-extension StorageGenerationalTests {
+extension `Storage Generational Tests` {
     @Test
     func `handle(at:) reconstructs exactly the live handle and rejects free or reused slots`() {
         Probe.reset()
