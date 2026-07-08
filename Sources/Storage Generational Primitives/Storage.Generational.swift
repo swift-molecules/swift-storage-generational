@@ -128,7 +128,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         /// the unsafe construction is localized HERE — the count is the plane's
         /// allocated slot count by construction).
         @inlinable
-        internal var _tokenSpan: Swift.Span<Int> {
+        package var _tokenSpan: Swift.Span<Int> {
             @_lifetime(borrow self)
             get {
                 let span = unsafe Swift.Span(_unsafeStart: _tokenPtr(), count: _slotCount)
@@ -138,7 +138,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
 
         /// A bounds-checked mutable span over the whole token plane.
         @inlinable
-        internal var _tokenMutableSpan: Swift.MutableSpan<Int> {
+        package var _tokenMutableSpan: Swift.MutableSpan<Int> {
             @_lifetime(&self)
             mutating get {
                 let span = unsafe Swift.MutableSpan(_unsafeStart: _tokenPtr(), count: _slotCount)
@@ -148,13 +148,13 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
 
         /// Whether the ledger token for slot `i` is occupied (odd parity).
         @inlinable
-        internal func _isOccupied(_ i: Int) -> Bool {
+        package func _isOccupied(_ i: Int) -> Bool {
             _tokenSpan[i] & 1 == 1
         }
 
         /// The current generation of slot `i` (the token's high bits).
         @inlinable
-        internal func _generation(_ i: Int) -> Int {
+        package func _generation(_ i: Int) -> Int {
             _tokenSpan[i] >> 1
         }
 
@@ -165,7 +165,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         /// SAFETY: allocated extent); the write goes through the owned region's
         /// SAFETY: stable base ([MEM-SAFE-029] concrete heap-pinned carve).
         @inlinable
-        internal mutating func _claim(_ i: Int) {
+        package mutating func _claim(_ i: Int) {
             unsafe _tokenPtr()[i] &+= 1
         }
 
@@ -174,7 +174,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         ///
         /// SAFETY: see `_claim` — in-range by construction, stable owned base.
         @inlinable
-        internal mutating func _release(_ i: Int) {
+        package mutating func _release(_ i: Int) {
             unsafe _tokenPtr()[i] &+= 1
         }
 
@@ -183,7 +183,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         ///
         /// SAFETY: see `_claim` — in-range by construction, stable owned base.
         @inlinable
-        internal mutating func _clearForRetire(_ i: Int) {
+        package mutating func _clearForRetire(_ i: Int) {
             unsafe _tokenPtr()[i] &-= 1
         }
 
@@ -191,7 +191,7 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         ///
         /// SAFETY: see `_claim` — in-range by construction, stable owned base.
         @inlinable
-        internal mutating func _seedLedger(_ i: Int, occupied: Bool, generation: Int) {
+        package mutating func _seedLedger(_ i: Int, occupied: Bool, generation: Int) {
             unsafe _tokenPtr()[i] = (generation << 1) | (occupied ? 1 : 0)
         }
 
