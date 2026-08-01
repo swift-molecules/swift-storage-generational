@@ -103,98 +103,6 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
             self._count = 0
         }
 
-        /// The typed pointer to slot `i` — derived PER ACCESS through the pool's own
-        /// `pointer(at:)` (L3; the pool owns its layout, including any stride padding).
-        @usableFromInline
-        internal func _ptr(at i: Int) -> UnsafeMutablePointer<Element> {
-            unsafe allocation.pointer(at: Index<Memory.Pool.Slot>(Ordinal(UInt(i))))
-                .assumingMemoryBound(to: Element.self)
-        }
-
-        // MARK: - Ledger plane accessors
-        //
-        // The token plane's typed base derives PER ACCESS from the owned heap region
-        // (the same discipline as `_ptr(at:)`; [MEM-SAFE-029]'s concrete heap-pinned
-        // carve — the region is out-of-line with a stable base). Every index is
-        // in-range by construction: `i < _slotCount` == the plane's slot count.
-
-        /// The token plane's typed base.
-        @usableFromInline
-        internal func _tokenPtr() -> UnsafeMutablePointer<Int> {
-            unsafe _tokens.base.mutablePointer.assumingMemoryBound(to: Int.self)
-        }
-
-        /// A bounds-checked read span over the whole token plane (span-typed access;
-        /// the unsafe construction is localized HERE — the count is the plane's
-        /// allocated slot count by construction).
-        @inlinable
-        package var _tokenSpan: Swift.Span<Int> {
-            @_lifetime(borrow self)
-            get {
-                let span = unsafe Swift.Span(_unsafeStart: _tokenPtr(), count: _slotCount)
-                return unsafe _overrideLifetime(span, borrowing: self)
-            }
-        }
-
-        /// A bounds-checked mutable span over the whole token plane.
-        @inlinable
-        package var _tokenMutableSpan: Swift.MutableSpan<Int> {
-            @_lifetime(&self)
-            mutating get {
-                let span = unsafe Swift.MutableSpan(_unsafeStart: _tokenPtr(), count: _slotCount)
-                return unsafe _overrideLifetime(span, mutating: &self)
-            }
-        }
-
-        /// Whether the ledger token for slot `i` is occupied (odd parity).
-        @inlinable
-        package func _isOccupied(_ i: Int) -> Bool {
-            _tokenSpan[i] & 1 == 1
-        }
-
-        /// The current generation of slot `i` (the token's high bits).
-        @inlinable
-        package func _generation(_ i: Int) -> Int {
-            _tokenSpan[i] >> 1
-        }
-
-        /// Ledger transition: free slot `i` becomes occupied (insert claims it) —
-        /// even→odd, generation unchanged (it names the incarnation being created).
-        ///
-        /// SAFETY: `i` is in `[0, _slotCount)` at every call site (the plane's
-        /// SAFETY: allocated extent); the write goes through the owned region's
-        /// SAFETY: stable base ([MEM-SAFE-029] concrete heap-pinned carve).
-        @inlinable
-        package mutating func _claim(_ i: Int) {
-            unsafe _tokenPtr()[i] &+= 1
-        }
-
-        /// Ledger transition: occupied slot `i` is freed — odd→even with the
-        /// generation bumped, so every outstanding handle to the slot goes stale.
-        ///
-        /// SAFETY: see `_claim` — in-range by construction, stable owned base.
-        @inlinable
-        package mutating func _release(_ i: Int) {
-            unsafe _tokenPtr()[i] &+= 1
-        }
-
-        /// Clears the occupancy of slot `i` WITHOUT a generation bump — the retiring-store
-        /// inerting step inside `grow(to:)` (the moved-out source must not re-destroy).
-        ///
-        /// SAFETY: see `_claim` — in-range by construction, stable owned base.
-        @inlinable
-        package mutating func _clearForRetire(_ i: Int) {
-            unsafe _tokenPtr()[i] &-= 1
-        }
-
-        /// Seeds the whole ledger entry of slot `i` — the clone/grow continuation path.
-        ///
-        /// SAFETY: see `_claim` — in-range by construction, stable owned base.
-        @inlinable
-        package mutating func _seedLedger(_ i: Int, occupied: Bool, generation: Int) {
-            unsafe _tokenPtr()[i] = (generation << 1) | (occupied ? 1 : 0)
-        }
-
         /// **The deinit oracle.**
         ///
         /// Destroys every still-occupied slot, THEN the `allocation` (pool) is
@@ -207,12 +115,112 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
                 i &+= 1
             }
         }
-
-        /// The generational slot handle — the canonical spelling of the non-generic carrier
-        /// `Store.Generational.Handle` (hoisted so generic composers can STORE handles without
-        /// naming this type's full instantiation; see `Store.Generational.swift`).
-        public typealias Handle = Store.Generational.Handle
     }
+}
+
+// MARK: - Slot pointer
+
+extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
+    /// The typed pointer to slot `i` — derived PER ACCESS through the pool's own
+    /// `pointer(at:)` (L3; the pool owns its layout, including any stride padding).
+    @usableFromInline
+    internal func _ptr(at i: Int) -> UnsafeMutablePointer<Element> {
+        unsafe allocation.pointer(at: Index<Memory.Pool.Slot>(Ordinal(UInt(i))))
+            .assumingMemoryBound(to: Element.self)
+    }
+}
+
+// MARK: - Ledger plane accessors
+//
+// The token plane's typed base derives PER ACCESS from the owned heap region
+// (the same discipline as `_ptr(at:)`; [MEM-SAFE-029]'s concrete heap-pinned
+// carve — the region is out-of-line with a stable base). Every index is
+// in-range by construction: `i < _slotCount` == the plane's slot count.
+
+extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
+    /// The token plane's typed base.
+    @usableFromInline
+    internal func _tokenPtr() -> UnsafeMutablePointer<Int> {
+        unsafe _tokens.base.mutablePointer.assumingMemoryBound(to: Int.self)
+    }
+
+    /// A bounds-checked read span over the whole token plane (span-typed access;
+    /// the unsafe construction is localized HERE — the count is the plane's
+    /// allocated slot count by construction).
+    @inlinable
+    package var _tokenSpan: Swift.Span<Int> {
+        @_lifetime(borrow self)
+        get {
+            let span = unsafe Swift.Span(_unsafeStart: _tokenPtr(), count: _slotCount)
+            return unsafe _overrideLifetime(span, borrowing: self)
+        }
+    }
+
+    /// A bounds-checked mutable span over the whole token plane.
+    @inlinable
+    package var _tokenMutableSpan: Swift.MutableSpan<Int> {
+        @_lifetime(&self)
+        mutating get {
+            let span = unsafe Swift.MutableSpan(_unsafeStart: _tokenPtr(), count: _slotCount)
+            return unsafe _overrideLifetime(span, mutating: &self)
+        }
+    }
+
+    /// Whether the ledger token for slot `i` is occupied (odd parity).
+    @inlinable
+    package func _isOccupied(_ i: Int) -> Bool {
+        _tokenSpan[i] & 1 == 1
+    }
+
+    /// The current generation of slot `i` (the token's high bits).
+    @inlinable
+    package func _generation(_ i: Int) -> Int {
+        _tokenSpan[i] >> 1
+    }
+
+    /// Ledger transition: free slot `i` becomes occupied (insert claims it) —
+    /// even→odd, generation unchanged (it names the incarnation being created).
+    ///
+    /// SAFETY: `i` is in `[0, _slotCount)` at every call site (the plane's
+    /// SAFETY: allocated extent); the write goes through the owned region's
+    /// SAFETY: stable base ([MEM-SAFE-029] concrete heap-pinned carve).
+    @inlinable
+    package mutating func _claim(_ i: Int) {
+        unsafe _tokenPtr()[i] &+= 1
+    }
+
+    /// Ledger transition: occupied slot `i` is freed — odd→even with the
+    /// generation bumped, so every outstanding handle to the slot goes stale.
+    ///
+    /// SAFETY: see `_claim` — in-range by construction, stable owned base.
+    @inlinable
+    package mutating func _release(_ i: Int) {
+        unsafe _tokenPtr()[i] &+= 1
+    }
+
+    /// Clears the occupancy of slot `i` WITHOUT a generation bump — the retiring-store
+    /// inerting step inside `grow(to:)` (the moved-out source must not re-destroy).
+    ///
+    /// SAFETY: see `_claim` — in-range by construction, stable owned base.
+    @inlinable
+    package mutating func _clearForRetire(_ i: Int) {
+        unsafe _tokenPtr()[i] &-= 1
+    }
+
+    /// Seeds the whole ledger entry of slot `i` — the clone/grow continuation path.
+    ///
+    /// SAFETY: see `_claim` — in-range by construction, stable owned base.
+    @inlinable
+    package mutating func _seedLedger(_ i: Int, occupied: Bool, generation: Int) {
+        unsafe _tokenPtr()[i] = (generation << 1) | (occupied ? 1 : 0)
+    }
+}
+
+extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
+    /// The generational slot handle — the canonical spelling of the non-generic carrier
+    /// `Store.Generational.Handle` (hoisted so generic composers can STORE handles without
+    /// naming this type's full instantiation; see `Store.Generational.swift`).
+    public typealias Handle = Store.Generational.Handle
 }
 
 // MARK: - Properties

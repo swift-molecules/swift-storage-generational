@@ -17,6 +17,9 @@ private typealias Slots<E: ~Copyable> =
 
 @Suite
 struct `Generational Seam Law Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
 
     @Test
     func `the generational column obeys the seam ledger laws`() {
@@ -43,13 +46,16 @@ struct `Generational Seam Law Tests` {
 
 @Suite
 struct `Generational Seam Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
 
     @Test
     func `positional move vacates the slot and stales outstanding handles`() {
         var s = Slots<Int>.create(slotCapacity: 4)
         let h0 = s.insert(7)
         let h1 = s.insert(8)
-        let moved = s.move(at: Index<Int>(Ordinal(UInt(0))))
+        let moved = s.move(at: 0)
         #expect(moved == 7)
         let staleGone = s.contains(h0)
         #expect(!staleGone)  // generation bumped by the positional move
@@ -57,7 +63,7 @@ struct `Generational Seam Tests` {
         #expect(live)
         let n = s.count
         #expect(n == Index<Int>.Count(UInt(1)))
-        let read = s[Index<Int>(Ordinal(UInt(1)))]
+        let read = s[1]
         #expect(read == 8)  // stable physical positions (no re-anchoring)
     }
 
@@ -81,6 +87,9 @@ struct `Generational Seam Tests` {
 
 @Suite
 struct `Generational Clone Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
 
     @Test
     func `clone preserves indices, occupancy, AND generations — live and stale alike`() {
@@ -115,7 +124,7 @@ struct `Generational Clone Tests` {
         #expect(freshLive)
         let n = copy.count
         #expect(n == Index<Int>.Count(UInt(3)))  // exactly the free set was insertable
-        let survivor = copy[Index<Int>(Ordinal(UInt(1)))]
+        let survivor = copy[1]
         #expect(survivor == 2)  // the original occupant untouched
     }
 }

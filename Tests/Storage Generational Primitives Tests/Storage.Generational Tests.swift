@@ -33,7 +33,7 @@ private final class Item: @unchecked Sendable {
         self.id = id
         self.value = value
     }
-    deinit { Probe.recordDestroy(id) }
+    deinit { Probe.record(id) }
 }
 
 extension Item {
@@ -43,15 +43,21 @@ extension Item {
 private enum Probe {}
 
 extension Probe {
+    // SAFETY: allocated once at first access, mutated only through `reset()` /
+    // `record(_:)` on the single-threaded test-runner path — this is a
+    // test-fixture deinit tally, never touched concurrently.
     nonisolated(unsafe) static var _destroyed: [Int] = []
     static func reset() { unsafe _destroyed = [] }
-    static func recordDestroy(_ id: Int) { unsafe _destroyed.append(id) }
+    static func record(_ id: Int) { unsafe _destroyed.append(id) }
     static var destroyed: [Int] { unsafe _destroyed }
-    static var destroyedSorted: [Int] { unsafe _destroyed.sorted() }
+    static var sorted: [Int] { unsafe _destroyed.sorted() }
 }
 
 @Suite(.serialized)
 struct `Storage Generational Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
 
     @Test
     func `grow preserves the incarnation history — live handles resolve, stale stay stale`() {
@@ -78,11 +84,11 @@ struct `Storage Generational Tests` {
             let n = s.count
             #expect(n == Index<Item>.Count(UInt(3)))
             // No element died during the move (1 died at its remove above).
-            let midGrow = Probe.destroyedSorted
+            let midGrow = Probe.sorted
             #expect(midGrow == [1])
         }
         // Exactly one teardown per element — the move never double-destroys.
-        let all = Probe.destroyedSorted
+        let all = Probe.sorted
         #expect(all == [1, 2, 3, 4])
     }
 
@@ -147,7 +153,7 @@ struct `Storage Generational Tests` {
             _ = s.insert(Item(2))
             _ = s.insert(Item(3))
         }  // the oracle destroys the 3 occupied slots; then the pool frees the region once
-        let ds = Probe.destroyedSorted
+        let ds = Probe.sorted
         #expect(ds == [1, 2, 3])
     }
 }
