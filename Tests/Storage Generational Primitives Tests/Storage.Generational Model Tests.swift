@@ -744,7 +744,7 @@ extension `Storage.Generational Model`.Unit {
         // The freed slot's incarnation history continues across the relocation:
         // a re-mint at b's slot must carry the BUMPED generation, never b's.
         var freshHandles: [Handle] = []
-        for id in 0..<6 {
+        (0..<6).forEach { id in
             freshHandles.append(store.insert(100 + id))
         }
         for fresh in freshHandles where fresh.index == b.index {
