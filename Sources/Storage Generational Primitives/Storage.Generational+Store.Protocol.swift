@@ -52,13 +52,19 @@ where Allocation: ~Copyable, Element: ~Copyable {
     public subscript(slot: Index<Element>) -> Element {
         _read {
             let i = Int(bitPattern: slot)
-            precondition(i < _slotCount && _isOccupied(i), "generational seam: subscript on an unoccupied slot")
+            precondition(
+                i < _slotCount && _isOccupied(i),
+                "generational seam: subscript on an unoccupied slot"
+            )
             let pointer = unsafe _ptr(at: i)
             yield unsafe pointer.pointee
         }
         _modify {
             let i = Int(bitPattern: slot)
-            precondition(i < _slotCount && _isOccupied(i), "generational seam: subscript on an unoccupied slot")
+            precondition(
+                i < _slotCount && _isOccupied(i),
+                "generational seam: subscript on an unoccupied slot"
+            )
             let pointer = unsafe _ptr(at: i)
             yield &(unsafe pointer.pointee)
         }
@@ -80,7 +86,10 @@ where Allocation: ~Copyable, Element: ~Copyable {
     @inlinable
     public mutating func move(at slot: Index<Element>) -> Element {
         let i = Int(bitPattern: slot)
-        precondition(i < _slotCount && _isOccupied(i), "generational seam: move on an unoccupied slot")
+        precondition(
+            i < _slotCount && _isOccupied(i),
+            "generational seam: move on an unoccupied slot"
+        )
         let element = unsafe _ptr(at: i).move()
         _release(i)
         let poolSlot = Index<Memory.Pool.Slot>(Ordinal(UInt(i)))

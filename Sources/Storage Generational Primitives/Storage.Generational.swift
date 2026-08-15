@@ -98,7 +98,11 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
             let tokens = Memory.Heap(byteCount: tokenBytes, alignment: alignment)
             // SAFETY: the region was just allocated with exactly `slotCount` Int strides;
             // SAFETY: zero-fill makes every slot's token (generation 0, free) before any read.
-            unsafe tokens.base.mutablePointer.initializeMemory(as: Int.self, repeating: 0, count: slotCount)
+            unsafe tokens.base.mutablePointer.initializeMemory(
+                as: Int.self,
+                repeating: 0,
+                count: slotCount
+            )
             self._tokens = tokens
             self._count = 0
         }
@@ -279,7 +283,8 @@ extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
 
 // MARK: - Heap-pool-backed construction (construction pins, operations generic)
 
-extension Storage.Generational where Allocation == Memory.Allocator<Memory.Heap>.Pool, Element: ~Copyable {
+extension Storage.Generational
+where Allocation == Memory.Allocator<Memory.Heap>.Pool, Element: ~Copyable {
     /// Creates generational storage over a fresh heap `Pool` carving `slotCapacity` element slots.
     ///
     /// Typed count per the conversions discipline (Round M A3 — matches `grow(to:)`).

@@ -71,7 +71,9 @@ extension Reference {
             return ["minted handle index \(handle.index) outside capacity \(slots.count)"]
         }
         if slots[handle.index].occupied {
-            findings.append("minted handle for slot \(handle.index), which the ledger holds OCCUPIED")
+            findings.append(
+                "minted handle for slot \(handle.index), which the ledger holds OCCUPIED"
+            )
         }
         if slots[handle.index].generation != handle.generation {
             findings.append(
@@ -172,7 +174,9 @@ extension TrivialStream {
             }
             model.retire(liveAt: position)
         } else {
-            verdict.diverged(["remove rejected a LIVE handle (α): @\(entry.handle.index)g\(entry.handle.generation)"])
+            verdict.diverged([
+                "remove rejected a LIVE handle (α): @\(entry.handle.index)g\(entry.handle.generation)"
+            ])
         }
     }
 
@@ -180,7 +184,8 @@ extension TrivialStream {
         let entry = model.stale[rng.below(model.stale.count)]
         verdict.record("stale-remove @\(entry.handle.index)g\(entry.handle.generation)")
         if let element = store.remove(entry.handle) {
-            verdict.diverged(["STALE handle re-validated through remove (β): yielded id \(element)"])
+            verdict.diverged(["STALE handle re-validated through remove (β): yielded id \(element)"]
+            )
         }
     }
 
@@ -203,7 +208,9 @@ extension TrivialStream {
         model.live[position].id = id
         model.slots[entry.handle.index].id = id
         if !store.contains(entry.handle) {
-            verdict.diverged(["mutation through a handle staled it (mutation must not bump generations)"])
+            verdict.diverged([
+                "mutation through a handle staled it (mutation must not bump generations)"
+            ])
         }
     }
 
@@ -236,13 +243,19 @@ extension TrivialStream {
         var copy = store.clone()
         for entry in model.live {
             if !copy.contains(entry.handle) {
-                verdict.diverged(["clone dropped live handle @\(entry.handle.index)g\(entry.handle.generation)"])
+                verdict.diverged([
+                    "clone dropped live handle @\(entry.handle.index)g\(entry.handle.generation)"
+                ])
             } else if copy[entry.handle] != entry.id {
-                verdict.diverged(["clone resolves id \(copy[entry.handle]) at @\(entry.handle.index), model \(entry.id)"])
+                verdict.diverged([
+                    "clone resolves id \(copy[entry.handle]) at @\(entry.handle.index), model \(entry.id)"
+                ])
             }
         }
         for entry in model.stale where copy.contains(entry.handle) {
-            verdict.diverged(["clone re-validated a stale handle @\(entry.handle.index)g\(entry.handle.generation)"])
+            verdict.diverged([
+                "clone re-validated a stale handle @\(entry.handle.index)g\(entry.handle.generation)"
+            ])
         }
         if model.liveCount < model.capacity {
             _ = copy.insert(-1)
@@ -263,13 +276,19 @@ extension TrivialStream {
         }
         for entry in model.live {
             if !store.contains(entry.handle) {
-                findings.append("α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected")
+                findings.append(
+                    "α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected"
+                )
             } else if store[entry.handle] != entry.id {
-                findings.append("live handle @\(entry.handle.index) resolves \(store[entry.handle]), model \(entry.id)")
+                findings.append(
+                    "live handle @\(entry.handle.index) resolves \(store[entry.handle]), model \(entry.id)"
+                )
             }
         }
         for entry in model.stale where store.contains(entry.handle) {
-            findings.append("β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated")
+            findings.append(
+                "β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated"
+            )
         }
         return findings
     }
@@ -425,16 +444,22 @@ extension RefcountedStream {
         }
         for entry in model.live {
             if !store.contains(entry.handle) {
-                findings.append("α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected")
+                findings.append(
+                    "α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected"
+                )
             } else if store[entry.handle].id != entry.id {
                 findings.append("live handle resolves \(store[entry.handle].id), model \(entry.id)")
             }
         }
         for entry in model.stale where store.contains(entry.handle) {
-            findings.append("β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated")
+            findings.append(
+                "β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated"
+            )
         }
         if census.died.count != expectedDeaths {
-            findings.append("teardown drift: \(census.died.count) deaths, expected \(expectedDeaths) (relocation/double-deinit class)")
+            findings.append(
+                "teardown drift: \(census.died.count) deaths, expected \(expectedDeaths) (relocation/double-deinit class)"
+            )
         }
         return findings
     }
@@ -489,7 +514,9 @@ private struct MoveOnlyStream: ~Copyable {
     init(seed: UInt64, census: Model.Census) {
         var rng = Model.Random(seed: seed)
         let capacity = 2 + rng.below(11)
-        self.store = Slots<Model.Element.Tracked>.create(slotCapacity: Index<Model.Element.Tracked>.Count(UInt(capacity)))
+        self.store = Slots<Model.Element.Tracked>.create(
+            slotCapacity: Index<Model.Element.Tracked>.Count(UInt(capacity))
+        )
         self.model = Reference(capacity: capacity)
         self.rng = rng
         self.verdict = Model.Verdict(seed: seed)
@@ -554,7 +581,9 @@ extension MoveOnlyStream {
         let position = rng.below(model.live.count)
         let entry = model.live[position]
         verdict.record("seam-move @\(entry.handle.index)")
-        let element = store.move(at: Index<Model.Element.Tracked>(Ordinal(UInt(entry.handle.index))))
+        let element = store.move(
+            at: Index<Model.Element.Tracked>(Ordinal(UInt(entry.handle.index)))
+        )
         if element.id != entry.id {
             verdict.diverged(["seam move(at:) returned id \(element.id), model \(entry.id)"])
         }
@@ -586,16 +615,22 @@ extension MoveOnlyStream {
         }
         for entry in model.live {
             if !store.contains(entry.handle) {
-                findings.append("α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected")
+                findings.append(
+                    "α: live handle @\(entry.handle.index)g\(entry.handle.generation) rejected"
+                )
             } else if store[entry.handle].id != entry.id {
                 findings.append("live handle resolves \(store[entry.handle].id), model \(entry.id)")
             }
         }
         for entry in model.stale where store.contains(entry.handle) {
-            findings.append("β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated")
+            findings.append(
+                "β: stale handle @\(entry.handle.index)g\(entry.handle.generation) re-validated"
+            )
         }
         if census.died.count != expectedDeaths {
-            findings.append("teardown drift: \(census.died.count) deaths, expected \(expectedDeaths) (relocation/double-deinit class)")
+            findings.append(
+                "teardown drift: \(census.died.count) deaths, expected \(expectedDeaths) (relocation/double-deinit class)"
+            )
         }
         return findings
     }
