@@ -1,29 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-primitives open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
-// The W2 ledger/grow model suite (arc-2): SEEDED op streams drive the
-// generational ledger against an array-of-(occupied, generation, id) reference,
-// with the handle laws as every-op oracles — generation CONTINUITY at every mint
-// (per-slot monotonicity), α (no wrongly-rejected live handle), β (no stale
-// handle re-validating, including over reused slots), live handles surviving
-// `grow(to:)`, capacity/count coherence, and teardown EXACTNESS (census deaths
-// reconciled after EVERY op, so a relocation double-deinit fails at the op that
-// caused it — the grow door's neutralization regression-tested at model scale).
-//
-// Determinism: generation reads MODEL state only; the pool's slot hand-out is
-// single-threaded deterministic, so seed → identical transcript, every run.
-// Element ladder: trivial (Int) / refcounted (class) / move-only (deinit oracle).
-// Shape constraint (arc-2 incident 2.5): each op is its own small method on a
-// ~Copyable stream struct.
-
 import Buffer_Primitives_Test_Support
 import Index_Primitives
 import Memory_Allocator_Primitive
@@ -32,19 +6,15 @@ import Storage_Generational_Primitives
 import Store_Primitive
 import Testing
 
-/// The canonical sparse storage spelling: generation-token slotmap over a heap pool.
 private typealias Slots<Element: ~Copyable> =
     Storage<Memory.Allocator<Memory.Heap>.Pool>.Generational<Element>
 
 private typealias Handle = Store.Generational.Handle
 
-// MARK: - The reference model: the ledger as plain value state
-
 private struct Reference {
     var slots: [Slot]
     var live: [(handle: Handle, id: Int)] = []
-    /// Staled handles (by remove/seam-move/removeAll), kept bounded; entries
-    /// whose slot has been REUSED at a later generation are the aliasing probes.
+
     var stale: [(handle: Handle, id: Int)] = []
 
     init(capacity: Int) {
@@ -62,9 +32,6 @@ extension Reference {
     var capacity: Int { slots.count }
     var liveCount: Int { live.count }
 
-    /// Validates a fresh mint against the ledger and admits it.
-    ///
-    /// Returns findings.
     mutating func admit(_ handle: Handle, id: Int) -> [String] {
         var findings: [String] = []
         guard handle.index >= 0, handle.index < slots.count else {
@@ -86,7 +53,6 @@ extension Reference {
         return findings
     }
 
-    /// Retires a live entry (by position in `live`): generation bumps, handle goes stale.
     mutating func retire(liveAt position: Int) {
         let entry = live.remove(at: position)
         slots[entry.handle.index].occupied = false
@@ -117,9 +83,6 @@ extension Reference {
     }
 }
 
-// MARK: - The refcounted element (the census + the move-only element are the
-// hoisted Model fixtures — W3-0)
-
 private final class Item {
     let id: Int
     let serial: Int
@@ -135,8 +98,6 @@ private final class Item {
         census.record(death: serial)
     }
 }
-
-// MARK: - The trivial lane (Int elements; the only lane with clone — E: Copyable)
 
 private struct TrivialStream: ~Copyable {
     var store: Slots<Int>
@@ -295,9 +256,7 @@ extension TrivialStream {
 
     mutating func step() {
         var branch = rng.below(100)
-        // Redirect order matters: stale-ops → reads; live-needing ops on an empty
-        // store → insert (empty ⇒ not full); inserts at capacity → remove LAST
-        // (insert on a full pool is the trap door, deliberately unreachable).
+
         if model.stale.isEmpty, branch >= 52, branch < 58 { branch = 58 }
         if model.live.isEmpty, branch >= 30, branch < 86 { branch = 0 }
         if model.liveCount == model.capacity, branch < 30 { branch = 34 }
@@ -332,8 +291,6 @@ extension TrivialStream {
         verdict
     }
 }
-
-// MARK: - The refcounted lane (class elements; every drop is a deterministic death)
 
 private struct RefcountedStream: ~Copyable {
     var store: Slots<Item>
@@ -403,7 +360,7 @@ extension RefcountedStream {
         nextID += 1
         verdict.record("mutate @\(entry.handle.index) \(entry.id)→\(id)")
         store[entry.handle] = Item(id: id, census: census)
-        expectedDeaths += 1  // the displaced element
+        expectedDeaths += 1
         model.live[position].id = id
         model.slots[entry.handle.index].id = id
     }
@@ -466,7 +423,7 @@ extension RefcountedStream {
 
     mutating func step() {
         var branch = rng.below(100)
-        // Redirect order: stale-ops → reads; empty → insert; full-insert → remove LAST.
+
         if model.stale.isEmpty, branch >= 52, branch < 60 { branch = 60 }
         if model.live.isEmpty, branch >= 30, branch < 86 { branch = 0 }
         if model.liveCount == model.capacity, branch < 30 { branch = 34 }
@@ -499,8 +456,6 @@ extension RefcountedStream {
         (verdict, expectedDeaths, model.liveCount)
     }
 }
-
-// MARK: - The move-only lane (the deinit oracle is the point)
 
 private struct MoveOnlyStream: ~Copyable {
     var store: Slots<Model.Element.Tracked>
@@ -572,7 +527,7 @@ extension MoveOnlyStream {
         nextID += 1
         verdict.record("mutate @\(entry.handle.index) \(entry.id)→\(id)")
         store[entry.handle] = Model.Element.Tracked(id: id, census: census)
-        expectedDeaths += 1  // the displaced element
+        expectedDeaths += 1
         model.live[position].id = id
         model.slots[entry.handle.index].id = id
     }
@@ -637,7 +592,7 @@ extension MoveOnlyStream {
 
     mutating func step() {
         var branch = rng.below(100)
-        // Redirect order: stale-ops → reads; empty → insert; full-insert → remove LAST.
+
         if model.stale.isEmpty, branch >= 52, branch < 60 { branch = 60 }
         if model.live.isEmpty, branch >= 30, branch < 86 { branch = 0 }
         if model.liveCount == model.capacity, branch < 30 { branch = 34 }
@@ -671,8 +626,6 @@ extension MoveOnlyStream {
     }
 }
 
-// MARK: - Stream wrappers (census reconciliation happens after the store dies)
-
 private func runTrivialStream(seed: UInt64) -> Model.Verdict {
     var stream = TrivialStream(seed: seed)
     stream.run()
@@ -683,7 +636,7 @@ private func runRefcountedStream(seed: UInt64) -> Model.Verdict {
     let census = Model.Census()
     var stream = RefcountedStream(seed: seed, census: census)
     stream.run()
-    let (finished, expectedDeaths, liveAtEnd) = stream.finish()  // the store dies here
+    let (finished, expectedDeaths, liveAtEnd) = stream.finish()
     var verdict = finished
 
     if census.died.count != expectedDeaths + liveAtEnd {
@@ -703,7 +656,7 @@ private func runMoveOnlyStream(seed: UInt64) -> Model.Verdict {
     let census = Model.Census()
     var stream = MoveOnlyStream(seed: seed, census: census)
     stream.run()
-    let (finished, expectedDeaths, liveAtEnd) = stream.finish()  // the store dies here
+    let (finished, expectedDeaths, liveAtEnd) = stream.finish()
     var verdict = finished
 
     if census.died.count != expectedDeaths + liveAtEnd {
@@ -718,8 +671,6 @@ private func runMoveOnlyStream(seed: UInt64) -> Model.Verdict {
     }
     return verdict
 }
-
-// MARK: - The suites
 
 @Suite
 struct `Storage.Generational Model` {
@@ -755,7 +706,7 @@ extension `Storage.Generational Model`.Unit {
         let a = store.insert(10)
         let b = store.insert(20)
         let c = store.insert(30)
-        _ = store.remove(b)  // slot b: generation bumps; b goes stale
+        _ = store.remove(b)
 
         store.grow(to: Index<Int>.Count(8))
 
@@ -776,8 +727,6 @@ extension `Storage.Generational Model`.Unit {
         let bRemoved = store.remove(b)
         #expect(bRemoved == nil)
 
-        // The freed slot's incarnation history continues across the relocation:
-        // a re-mint at b's slot must carry the BUMPED generation, never b's.
         var freshHandles: [Handle] = []
         (0..<6).forEach { id in
             freshHandles.append(store.insert(100 + id))

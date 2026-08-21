@@ -12,7 +12,7 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        // MARK: - Generational (the un-fused Storage.Arena: generation tokens over a Pool)
+
         .library(
             name: "Storage Generational Primitives",
             targets: ["Storage Generational Primitives"]
@@ -50,7 +50,6 @@ let package = Package(
     ],
     targets: [
 
-        // MARK: - Generational discipline
         .target(
             name: "Storage Generational Primitives",
             dependencies: [
@@ -79,7 +78,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Tests
         .testTarget(
             name: "Storage Generational Primitives Tests",
             dependencies: [

@@ -7,13 +7,8 @@ import Storage_Generational_Primitives
 import Store_Protocol_Primitives
 import Testing
 
-// The ratified generational seam (ASK-H′, 2026-06-10): the thin restricted-domain
-// positional accessor + typed counts + removeAll + the generation-preserving clone.
-
 private typealias Slots<E: ~Copyable> =
     Storage<Memory.Allocator<Memory.Heap>.Pool>.Generational<E>
-
-// MARK: - [DS-024]: the generational column is lawful (fresh-pool order is dense)
 
 @Suite
 struct `Generational Seam Law Tests` {
@@ -42,8 +37,6 @@ struct `Generational Seam Law Tests` {
     }
 }
 
-// MARK: - The positional seam against the handle surface
-
 @Suite
 struct `Generational Seam Tests` {
     @Suite struct Unit {}
@@ -58,13 +51,13 @@ struct `Generational Seam Tests` {
         let moved = s.move(at: 0)
         #expect(moved == 7)
         let staleGone = s.contains(h0)
-        #expect(!staleGone)  // generation bumped by the positional move
+        #expect(!staleGone)
         let live = s.contains(h1)
         #expect(live)
         let n = s.count
         #expect(n == Index<Int>.Count(UInt(1)))
         let read = s[1]
-        #expect(read == 8)  // stable physical positions (no re-anchoring)
+        #expect(read == 8)
     }
 
     @Test
@@ -77,13 +70,11 @@ struct `Generational Seam Tests` {
         #expect(isEmpty)
         let gone = s.contains(h0)
         #expect(!gone)
-        let h = s.insert(9)  // the pool serves freed slots again
+        let h = s.insert(9)
         let live = s.contains(h)
         #expect(live)
     }
 }
-
-// MARK: - The generation-preserving clone (sibling handles survive a CoW detach)
 
 @Suite
 struct `Generational Clone Tests` {
@@ -96,8 +87,8 @@ struct `Generational Clone Tests` {
         var s = Slots<Int>.create(slotCapacity: 4)
         let h0 = s.insert(10)
         let h1 = s.insert(20)
-        _ = s.remove(h0)  // slot 0 freed: generation bumped
-        let h2 = s.insert(30)  // pool reuses slot 0 → new generation
+        _ = s.remove(h0)
+        let h2 = s.insert(30)
         let copy = s.clone()
         let liveSurvives = copy.contains(h1) && copy.contains(h2)
         #expect(liveSurvives)
@@ -116,15 +107,15 @@ struct `Generational Clone Tests` {
         var s = Slots<Int>.create(slotCapacity: 3)
         let h0 = s.insert(1)
         _ = s.insert(2)
-        _ = s.remove(h0)  // free set = {0, 2}
+        _ = s.remove(h0)
         var copy = s.clone()
         let hA = copy.insert(7)
         let hB = copy.insert(8)
         let freshLive = copy.contains(hA) && copy.contains(hB)
         #expect(freshLive)
         let n = copy.count
-        #expect(n == Index<Int>.Count(UInt(3)))  // exactly the free set was insertable
+        #expect(n == Index<Int>.Count(UInt(3)))
         let survivor = copy[1]
-        #expect(survivor == 2)  // the original occupant untouched
+        #expect(survivor == 2)
     }
 }
