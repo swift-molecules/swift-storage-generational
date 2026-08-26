@@ -1,4 +1,4 @@
-# Storage Generational Primitives
+# swift-storage-generational
 
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 
@@ -11,7 +11,7 @@ A generation-token slotmap: stable `(index, generation)` handles over a pooled a
 `Storage.Generational` is the un-fused arena: a free-list-backed slot pool carries the bytes, while a per-slot generation ledger lives alongside it. Inserting an element returns a `(index, generation)` `Handle`; removing by handle destroys the element, returns the slot to the pool, and bumps the slot's generation. A handle minted before the slot was freed no longer resolves — so a slot reused for a new element rejects the stale handle that once named it. That is the slotmap's value over a bare pool: use-after-free becomes a checked `false`, not undefined behaviour.
 
 ```swift
-import Storage_Generational_Primitives
+import Storage_Generational
 
 // A heap-pool-backed generational slotmap holding up to 8 `Int` slots.
 var storage = Storage<Memory.Allocator<Memory.Heap>.Pool>.Generational<Int>
@@ -41,7 +41,7 @@ Beyond `insert` / `remove`, the storage offers `removeAll()` (drain every occupi
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-primitives/swift-storage-generational-primitives.git", branch: "main")
+    .package(url: "https://github.com/swift-molecules/swift-storage-generational.git", branch: "main")
 ]
 ```
 
@@ -49,7 +49,7 @@ dependencies: [
 .target(
     name: "App",
     dependencies: [
-        .product(name: "Storage Generational Primitives", package: "swift-storage-generational-primitives"),
+        .product(name: "Storage Generational", package: "swift-storage-generational"),
     ]
 )
 ```
@@ -64,7 +64,7 @@ One library product. Re-exports the storage namespace and the heap-pool allocato
 
 | Product | Target | Purpose |
 |---------|--------|---------|
-| `Storage Generational Primitives` | `Sources/Storage Generational Primitives/` | The generational slotmap `Storage<Allocation>.Generational<Element>` over a `Memory.Pooling` allocation, with the per-slot generation ledger, the deinit oracle, and the non-generic `(index, generation)` carrier `Store.Generational.Handle`. |
+| `Storage Generational` | `Sources/Storage Generational/` | The generational slotmap `Storage<Allocation>.Generational<Element>` over a `Memory.Pooling` allocation, with the per-slot generation ledger, the deinit oracle, and the non-generic `(index, generation)` carrier `Store.Generational.Handle`. |
 
 Foundation-free.
 

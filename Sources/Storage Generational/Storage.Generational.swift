@@ -1,12 +1,12 @@
-public import Index_Primitives
-public import Memory_Address_Primitives
-public import Memory_Alignment_Primitives
-public import Memory_Allocator_Pool_Primitives
+public import Index
+public import Memory_Address
+public import Memory_Alignment
+public import Memory_Allocator_Pool
 public import Memory_Allocator_Primitive
-public import Memory_Heap_Primitives
+public import Memory_Heap
 public import Memory_Primitive
 import Ordinal_Primitive
-import Ordinal_Primitives_Standard_Library_Integration
+import Ordinal_Standard_Library_Integration
 public import Storage_Primitive
 public import Store_Primitive
 

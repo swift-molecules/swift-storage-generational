@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-storage-generational-primitives",
+    name: "swift-storage-generational",
     platforms: [
         .macOS(.v27),
         .iOS(.v27),
@@ -14,80 +14,80 @@ let package = Package(
     products: [
 
         .library(
-            name: "Storage Generational Primitives",
-            targets: ["Storage Generational Primitives"]
+            name: "Storage Generational",
+            targets: ["Storage Generational"]
         )
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-primitives/swift-storage-primitives.git",
+            url: "https://github.com/swift-molecules/swift-storage.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-buffer-primitives.git",
+            url: "https://github.com/swift-molecules/swift-buffer.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-index-primitives.git",
+            url: "https://github.com/swift-molecules/swift-index.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-ordinal-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ordinal.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-memory-primitives.git",
+            url: "https://github.com/swift-molecules/swift-memory.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git",
+            url: "https://github.com/swift-molecules/swift-memory-heap.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git",
+            url: "https://github.com/swift-molecules/swift-memory-allocation.git",
             branch: "main"
         ),
     ],
     targets: [
 
         .target(
-            name: "Storage Generational Primitives",
+            name: "Storage Generational",
             dependencies: [
-                .product(name: "Storage Primitive", package: "swift-storage-primitives"),
-                .product(name: "Store Primitive", package: "swift-storage-primitives"),
-                .product(name: "Store Protocol Primitives", package: "swift-storage-primitives"),
-                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
-                .product(name: "Index Primitives", package: "swift-index-primitives"),
-                .product(name: "Ordinal Primitive", package: "swift-ordinal-primitives"),
+                .product(name: "Storage Primitive", package: "swift-storage"),
+                .product(name: "Store Primitive", package: "swift-storage"),
+                .product(name: "Store Protocol", package: "swift-storage"),
+                .product(name: "Buffer Protocol", package: "swift-buffer"),
+                .product(name: "Index", package: "swift-index"),
+                .product(name: "Ordinal Primitive", package: "swift-ordinal"),
                 .product(
-                    name: "Ordinal Primitives Standard Library Integration",
-                    package: "swift-ordinal-primitives"
+                    name: "Ordinal Standard Library Integration",
+                    package: "swift-ordinal"
                 ),
-                .product(name: "Memory Primitive", package: "swift-memory-primitives"),
-                .product(name: "Memory Address Primitives", package: "swift-memory-primitives"),
-                .product(name: "Memory Alignment Primitives", package: "swift-memory-primitives"),
-                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
+                .product(name: "Memory Primitive", package: "swift-memory"),
+                .product(name: "Memory Address", package: "swift-memory"),
+                .product(name: "Memory Alignment", package: "swift-memory"),
+                .product(name: "Memory Heap", package: "swift-memory-heap"),
                 .product(
                     name: "Memory Allocator Primitive",
-                    package: "swift-memory-allocation-primitives"
+                    package: "swift-memory-allocation"
                 ),
                 .product(
-                    name: "Memory Allocator Pool Primitives",
-                    package: "swift-memory-allocation-primitives"
+                    name: "Memory Allocator Pool",
+                    package: "swift-memory-allocation"
                 ),
             ]
         ),
 
         .testTarget(
-            name: "Storage Generational Primitives Tests",
+            name: "Storage Generational Tests",
             dependencies: [
-                "Storage Generational Primitives",
+                "Storage Generational",
                 .product(
-                    name: "Buffer Primitives Test Support",
-                    package: "swift-buffer-primitives"
+                    name: "Buffer Test Support",
+                    package: "swift-buffer"
                 ),
-                .product(name: "Store Protocol Primitives", package: "swift-storage-primitives"),
-                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Store Protocol", package: "swift-storage"),
+                .product(name: "Buffer Protocol", package: "swift-buffer"),
             ]
         ),
     ],

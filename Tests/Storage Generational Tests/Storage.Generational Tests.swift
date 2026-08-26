@@ -1,7 +1,7 @@
-import Index_Primitives
+import Index
 import Memory_Allocator_Primitive
-import Memory_Heap_Primitives
-import Storage_Generational_Primitives
+import Memory_Heap
+import Storage_Generational
 import Testing
 
 private typealias Slots<Element: ~Copyable> =

@@ -1,7 +1,7 @@
-public import Index_Primitives
-public import Memory_Allocator_Pool_Primitives
-import Ordinal_Primitives_Standard_Library_Integration
-public import Store_Protocol_Primitives
+public import Index
+public import Memory_Allocator_Pool
+import Ordinal_Standard_Library_Integration
+public import Store_Protocol
 
 extension Storage.Generational: Store.`Protocol`
 where Allocation: ~Copyable, Element: ~Copyable {
