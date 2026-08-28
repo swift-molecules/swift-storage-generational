@@ -1,8 +1,10 @@
+public import Cardinal
 public import Index
+public import Memory
 public import Memory_Allocator_Pool
 public import Memory_Allocator_Primitive
-public import Memory_Heap
 import Ordinal_Standard_Library_Integration
+public import Tagged
 
 extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
 
@@ -63,7 +65,7 @@ extension Storage.Generational
 where Allocation == Memory.Allocator<Memory.Heap>.Pool, Element: ~Copyable {
 
     @inlinable
-    public mutating func grow(to slotCapacity: Index<Element>.Count) {
+    public mutating func grow(to slotCapacity: Tagged<Element, Cardinal>) {
         precondition(
             slotCapacity >= capacity,
             "Storage.Generational.grow(to:): the slot universe never shrinks"

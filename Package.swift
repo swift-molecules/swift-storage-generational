@@ -20,31 +20,35 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-molecules/swift-storage.git",
+            url: "https://github.com/swift-atoms/swift-storage.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-buffer.git",
+            url: "https://github.com/swift-atoms/swift-index.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-index.git",
+            url: "https://github.com/swift-atoms/swift-ordinal.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-ordinal.git",
+            url: "https://github.com/swift-molecules/swift-ordinal-comparison.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-memory.git",
-            branch: "main"
-        ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-memory-heap.git",
+            url: "https://github.com/swift-atoms/swift-memory.git",
             branch: "main"
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-memory-allocation.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-atoms/swift-cardinal.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-atoms/swift-tagged.git",
             branch: "main"
         ),
     ],
@@ -53,20 +57,20 @@ let package = Package(
         .target(
             name: "Storage Generational",
             dependencies: [
-                .product(name: "Storage Primitive", package: "swift-storage"),
-                .product(name: "Store Primitive", package: "swift-storage"),
-                .product(name: "Store Protocol", package: "swift-storage"),
-                .product(name: "Buffer Protocol", package: "swift-buffer"),
+                .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Index", package: "swift-index"),
-                .product(name: "Ordinal Primitive", package: "swift-ordinal"),
+                .product(name: "Ordinal", package: "swift-ordinal"),
                 .product(
                     name: "Ordinal Standard Library Integration",
                     package: "swift-ordinal"
                 ),
-                .product(name: "Memory Primitive", package: "swift-memory"),
-                .product(name: "Memory Address", package: "swift-memory"),
-                .product(name: "Memory Alignment", package: "swift-memory"),
-                .product(name: "Memory Heap", package: "swift-memory-heap"),
+                .product(
+                    name: "Ordinal Comparison",
+                    package: "swift-ordinal-comparison"
+                ),
+                .product(name: "Memory", package: "swift-memory"),
+                .product(name: "Cardinal", package: "swift-cardinal"),
+                .product(name: "Tagged", package: "swift-tagged"),
                 .product(
                     name: "Memory Allocator Primitive",
                     package: "swift-memory-allocation"
@@ -82,12 +86,16 @@ let package = Package(
             name: "Storage Generational Tests",
             dependencies: [
                 "Storage Generational",
+                .product(name: "Storage", package: "swift-storage"),
+                .product(name: "Index", package: "swift-index"),
+                .product(name: "Ordinal", package: "swift-ordinal"),
+                .product(name: "Memory", package: "swift-memory"),
+                .product(name: "Cardinal", package: "swift-cardinal"),
+                .product(name: "Tagged", package: "swift-tagged"),
                 .product(
-                    name: "Buffer Test Support",
-                    package: "swift-buffer"
+                    name: "Ordinal Standard Library Integration",
+                    package: "swift-ordinal"
                 ),
-                .product(name: "Store Protocol", package: "swift-storage"),
-                .product(name: "Buffer Protocol", package: "swift-buffer"),
             ]
         ),
     ],

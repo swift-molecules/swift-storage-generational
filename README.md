@@ -15,7 +15,7 @@ import Storage_Generational
 
 // A heap-pool-backed generational slotmap holding up to 8 `Int` slots.
 var storage = Storage<Memory.Allocator<Memory.Heap>.Pool>.Generational<Int>
-    .create(slotCapacity: 8)
+    .create(slotCapacity: Tagged<Int, Cardinal>(_unchecked: Cardinal(8)))
 
 let first = storage.insert(10)              // a (index, generation) handle
 let second = storage.insert(20)
@@ -33,7 +33,7 @@ print(storage.contains(third))              // true  — a live handle
 print(storage.contains(first))              // false — use-after-free, caught
 ```
 
-Beyond `insert` / `remove`, the storage offers `removeAll()` (drain every occupied slot, bumping generations), `clone()` and `grow(to:)` (generation-preserving copy and relocation — handles minted before the copy keep resolving), and `forEach` over the occupied slots. It also witnesses the `Store.Protocol` and `Buffer.Protocol` seams, so generic composers can place it behind a shared box or a family template bound.
+Beyond `insert` / `remove`, the storage offers `removeAll()` (drain every occupied slot, bumping generations), `clone()` and `grow(to:)` (generation-preserving copy and relocation — handles minted before the copy keep resolving), and `forEach` over the occupied slots. It also witnesses `Store.Protocol`, so generic composers can place it behind a shared box or a family template bound.
 
 ---
 
@@ -54,7 +54,7 @@ dependencies: [
 )
 ```
 
-Requires Swift 6.3.1 and macOS 26 / iOS 26 / tvOS 26 / watchOS 26 / visionOS 26 (or the matching Linux / Windows toolchain).
+Requires Swift 6.4 and macOS 27 / iOS 27 / tvOS 27 / watchOS 27 / visionOS 27 (or the matching Linux / Windows toolchain).
 
 ---
 

@@ -1,7 +1,9 @@
+import Cardinal
 import Index
+import Memory
 import Memory_Allocator_Primitive
-import Memory_Heap
 import Storage_Generational
+import Tagged
 import Testing
 
 private typealias Slots<Element: ~Copyable> =
@@ -42,14 +44,14 @@ struct `Storage Generational Tests` {
     func `grow preserves the incarnation history — live handles resolve, stale stay stale`() {
         Probe.reset()
         do {
-            var s = Slots<Item>.create(slotCapacity: 2)
+            var s = Slots<Item>.create(slotCapacity: typedCount(2))
             let hStale = s.insert(Item(1))
             _ = s.remove(hStale)
             let hLive = s.insert(Item(2, value: 20))
             let hAlso = s.insert(Item(3, value: 30))
-            s.grow(to: Index<Item>.Count(UInt(8)))
+            s.grow(to: typedCount(8))
             let grown = s.capacity
-            #expect(grown == Index<Item>.Count(UInt(8)))
+            #expect(grown == typedCount(8))
             let liveHeld = s.contains(hLive) && s.contains(hAlso)
             #expect(liveHeld)
             let staleHeld = s.contains(hStale)
@@ -61,7 +63,7 @@ struct `Storage Generational Tests` {
             let v4 = s[h4].value
             #expect(v4 == 40)
             let n = s.count
-            #expect(n == Index<Item>.Count(UInt(3)))
+            #expect(n == typedCount(3))
 
             let midGrow = Probe.sorted
             #expect(midGrow == [1])
@@ -74,13 +76,13 @@ struct `Storage Generational Tests` {
     @Test
     func `insert Contains Subscript`() {
         Probe.reset()
-        var s = Slots<Item>.create(slotCapacity: 4)
+        var s = Slots<Item>.create(slotCapacity: typedCount(4))
         let h = s.insert(Item(1, value: 10))
         let has = s.contains(h)
         let cnt = s.count
         let v = s[h].value
         #expect(has)
-        #expect(cnt == Index<Item>.Count(UInt(1)))
+        #expect(cnt == typedCount(1))
         #expect(v == 10)
         s[h].bump()
         let v2 = s[h].value
@@ -90,7 +92,7 @@ struct `Storage Generational Tests` {
     @Test
     func `remove Returns Element And Stales Handle`() {
         Probe.reset()
-        var s = Slots<Item>.create(slotCapacity: 4)
+        var s = Slots<Item>.create(slotCapacity: typedCount(4))
         let h = s.insert(Item(7, value: 70))
         let removed = s.remove(h)
         let id = removed?.id
@@ -101,7 +103,7 @@ struct `Storage Generational Tests` {
         #expect(id == 7)
         #expect(val == 70)
         #expect(!stillThere)
-        #expect(cnt == Index<Item>.Count(UInt(0)))
+        #expect(cnt == typedCount(0))
         #expect(dEmpty)
         _ = consume removed
         let dAfter = Probe.destroyed
@@ -111,7 +113,7 @@ struct `Storage Generational Tests` {
     @Test
     func `reuse After Remove Stales Old Handle`() {
         Probe.reset()
-        var s = Slots<Item>.create(slotCapacity: 2)
+        var s = Slots<Item>.create(slotCapacity: typedCount(2))
         let h1 = s.insert(Item(1, value: 10))
         _ = s.remove(h1)
         let h2 = s.insert(Item(2, value: 20))
@@ -127,7 +129,7 @@ struct `Storage Generational Tests` {
     func `teardown Destroys Occupied Once`() {
         Probe.reset()
         do {
-            var s = Slots<Item>.create(slotCapacity: 8)
+            var s = Slots<Item>.create(slotCapacity: typedCount(8))
             _ = s.insert(Item(1))
             _ = s.insert(Item(2))
             _ = s.insert(Item(3))
@@ -141,7 +143,7 @@ extension `Storage Generational Tests` {
     @Test
     func `handle(at:) reconstructs exactly the live handle and rejects free or reused slots`() {
         Probe.reset()
-        var s = Slots<Item>.create(slotCapacity: 4)
+        var s = Slots<Item>.create(slotCapacity: typedCount(4))
         let h = s.insert(Item(1))
 
         #expect(s.handle(at: Index<Item>(Ordinal(UInt(h.index)))) == h)

@@ -1,4 +1,4 @@
-public import Store_Primitive
+public import Storage
 
 extension Store.Generational {
 

@@ -1,10 +1,10 @@
-import Buffer_Test_Support
-import Buffer_Protocol
+import Cardinal
 import Index
+import Memory
 import Memory_Allocator_Primitive
-import Memory_Heap
 import Storage_Generational
-import Store_Protocol
+import Storage
+import Tagged
 import Testing
 
 private typealias Slots<E: ~Copyable> =
@@ -18,16 +18,27 @@ struct `Generational Seam Law Tests` {
 
     @Test
     func `the generational column obeys the seam ledger laws`() {
-        let violations = Seam.Ledger.violations(
-            makeEmpty: { Slots<Int>.create(slotCapacity: 4) },
-            element: { $0 }
-        )
-        #expect(violations.isEmpty, "\(violations)")
+        var storage = Slots<Int>.create(slotCapacity: typedCount(4))
+        let capacity = storage.capacity
+
+        #expect(storage.count == typedCount(0))
+        storage.initialize(at: typedIndex(0), to: 10)
+        #expect(storage.count == typedCount(1))
+        storage.initialize(at: typedIndex(1), to: 20)
+        #expect(storage.count == typedCount(2))
+
+        storage[typedIndex(0)] = 30
+        #expect(storage.count == typedCount(2))
+        #expect(storage.move(at: typedIndex(1)) == 20)
+        #expect(storage.count == typedCount(1))
+        #expect(storage.move(at: typedIndex(0)) == 30)
+        #expect(storage.count == typedCount(0))
+        #expect(storage.capacity == capacity)
     }
 
     @Test
     func `a fresh pool hands out slots densely (the initialize domain)`() {
-        var s = Slots<Int>.create(slotCapacity: 4)
+        var s = Slots<Int>.create(slotCapacity: typedCount(4))
         let h0 = s.insert(10)
         let h1 = s.insert(20)
         let h2 = s.insert(30)
@@ -45,24 +56,24 @@ struct `Generational Seam Tests` {
 
     @Test
     func `positional move vacates the slot and stales outstanding handles`() {
-        var s = Slots<Int>.create(slotCapacity: 4)
+        var s = Slots<Int>.create(slotCapacity: typedCount(4))
         let h0 = s.insert(7)
         let h1 = s.insert(8)
-        let moved = s.move(at: 0)
+        let moved = s.move(at: typedIndex(0))
         #expect(moved == 7)
         let staleGone = s.contains(h0)
         #expect(!staleGone)
         let live = s.contains(h1)
         #expect(live)
         let n = s.count
-        #expect(n == Index<Int>.Count(UInt(1)))
-        let read = s[1]
+        #expect(n == typedCount(1))
+        let read = s[typedIndex(1)]
         #expect(read == 8)
     }
 
     @Test
     func `removeAll drains every occupied slot and stales all handles`() {
-        var s = Slots<Int>.create(slotCapacity: 4)
+        var s = Slots<Int>.create(slotCapacity: typedCount(4))
         let h0 = s.insert(1)
         _ = s.insert(2)
         s.removeAll()
@@ -84,7 +95,7 @@ struct `Generational Clone Tests` {
 
     @Test
     func `clone preserves indices, occupancy, AND generations — live and stale alike`() {
-        var s = Slots<Int>.create(slotCapacity: 4)
+        var s = Slots<Int>.create(slotCapacity: typedCount(4))
         let h0 = s.insert(10)
         let h1 = s.insert(20)
         _ = s.remove(h0)
@@ -104,7 +115,7 @@ struct `Generational Clone Tests` {
 
     @Test
     func `the clone's pool state matches occupancy (inserts go to genuinely-free slots)`() {
-        var s = Slots<Int>.create(slotCapacity: 3)
+        var s = Slots<Int>.create(slotCapacity: typedCount(3))
         let h0 = s.insert(1)
         _ = s.insert(2)
         _ = s.remove(h0)
@@ -114,8 +125,8 @@ struct `Generational Clone Tests` {
         let freshLive = copy.contains(hA) && copy.contains(hB)
         #expect(freshLive)
         let n = copy.count
-        #expect(n == Index<Int>.Count(UInt(3)))
-        let survivor = copy[1]
+        #expect(n == typedCount(3))
+        let survivor = copy[typedIndex(1)]
         #expect(survivor == 2)
     }
 }

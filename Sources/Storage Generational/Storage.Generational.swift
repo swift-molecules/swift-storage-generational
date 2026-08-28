@@ -1,14 +1,11 @@
+public import Cardinal
 public import Index
-public import Memory_Address
-public import Memory_Alignment
+public import Memory
 public import Memory_Allocator_Pool
 public import Memory_Allocator_Primitive
-public import Memory_Heap
-public import Memory_Primitive
-import Ordinal_Primitive
 import Ordinal_Standard_Library_Integration
-public import Storage_Primitive
-public import Store_Primitive
+public import Storage
+public import Tagged
 
 extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
 
@@ -35,7 +32,9 @@ extension Storage where Allocation: Memory.Pooling, Allocation: ~Copyable {
         ) {
             self.allocation = allocation
             self._slotCount = slotCount
-            let tokenBytes = Memory.Address.Count(UInt(slotCount * MemoryLayout<Int>.stride))
+            let tokenBytes = Memory.Address.Count(
+                _unchecked: Cardinal(UInt(slotCount * MemoryLayout<Int>.stride))
+            )
 
             let alignment = try! Memory.Alignment(MemoryLayout<Int>.alignment)
             let tokens = Memory.Heap(byteCount: tokenBytes, alignment: alignment)
@@ -132,13 +131,17 @@ extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
 extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
 
     @inlinable
-    public var count: Index<Element>.Count { Index<Element>.Count(UInt(_count)) }
+    public var count: Tagged<Element, Cardinal> {
+        Tagged<Element, Cardinal>(_unchecked: Cardinal(UInt(_count)))
+    }
 
     @inlinable
     public var isEmpty: Bool { _count == 0 }
 
     @inlinable
-    public var capacity: Index<Element>.Count { Index<Element>.Count(UInt(_slotCount)) }
+    public var capacity: Tagged<Element, Cardinal> {
+        Tagged<Element, Cardinal>(_unchecked: Cardinal(UInt(_slotCount)))
+    }
 
     @inlinable
     public func contains(_ handle: Handle) -> Bool {
@@ -174,21 +177,23 @@ extension Storage.Generational
 where Allocation == Memory.Allocator<Memory.Heap>.Pool, Element: ~Copyable {
 
     @inlinable
-    public static func create(slotCapacity: Index<Element>.Count) -> Self {
+    public static func create(slotCapacity: Tagged<Element, Cardinal>) -> Self {
         precondition(slotCapacity > .zero, "Storage.Generational: capacity must be positive")
         let slotCount = Int(bitPattern: slotCapacity)
         let elementStride = MemoryLayout<Element>.stride
         let minSlot = MemoryLayout<Index<Memory.Pool.Slot>>.size
         let slotSizeBytes = Swift.max(elementStride, minSlot)
-        let slotSize = Memory.Address.Count(UInt(slotSizeBytes))
+        let slotSize = Memory.Address.Count(_unchecked: Cardinal(UInt(slotSizeBytes)))
 
         let alignment = try! Memory.Alignment(MemoryLayout<Element>.alignment)
-        let capacity = Index<Memory.Pool.Slot>.Count(UInt(slotCount))
-
+        let backingByteCount = Memory.Address.Count(
+            _unchecked: Cardinal(UInt(slotSizeBytes * slotCount))
+        )
+        let backing = Memory.Heap(byteCount: backingByteCount, alignment: alignment)
         let pool = try! Memory.Allocator<Memory.Heap>.Pool(
+            carving: backing,
             slotSize: slotSize,
-            slotAlignment: alignment,
-            capacity: capacity
+            slotAlignment: alignment
         )
         return Self(allocation: pool, slotCount: slotCount)
     }

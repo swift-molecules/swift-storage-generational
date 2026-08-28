@@ -1,9 +1,9 @@
-import Buffer_Test_Support
+import Cardinal
 import Index
+import Memory
 import Memory_Allocator_Primitive
-import Memory_Heap
 import Storage_Generational
-import Store_Primitive
+import Tagged
 import Testing
 
 private typealias Slots<Element: ~Copyable> =
@@ -109,7 +109,7 @@ private struct TrivialStream: ~Copyable {
     init(seed: UInt64) {
         var rng = Model.Random(seed: seed)
         let capacity = 2 + rng.below(15)
-        self.store = Slots<Int>.create(slotCapacity: Index<Int>.Count(UInt(capacity)))
+        self.store = Slots<Int>.create(slotCapacity: typedCount(capacity))
         self.model = Reference(capacity: capacity)
         self.rng = rng
         self.verdict = Model.Verdict(seed: seed)
@@ -189,7 +189,7 @@ extension TrivialStream {
     mutating func growStore() {
         let target = model.capacity + 1 + rng.below(8)
         verdict.record("grow \(model.capacity)→\(target)")
-        store.grow(to: Index<Int>.Count(UInt(target)))
+        store.grow(to: typedCount(target))
         model.grow(to: target)
     }
 
@@ -221,7 +221,7 @@ extension TrivialStream {
         if model.liveCount < model.capacity {
             _ = copy.insert(-1)
             let original = store.count
-            if original != Index<Int>.Count(UInt(model.liveCount)) {
+            if original != typedCount(model.liveCount) {
                 verdict.diverged(["mutating the clone changed the original's count"])
             }
         }
@@ -229,10 +229,10 @@ extension TrivialStream {
 
     func audit() -> [String] {
         var findings: [String] = []
-        if store.count != Index<Int>.Count(UInt(model.liveCount)) {
+        if store.count != typedCount(model.liveCount) {
             findings.append("count: store \(store.count), model \(model.liveCount)")
         }
-        if store.capacity != Index<Int>.Count(UInt(model.capacity)) {
+        if store.capacity != typedCount(model.capacity) {
             findings.append("capacity: store \(store.capacity), model \(model.capacity)")
         }
         for entry in model.live {
@@ -304,7 +304,7 @@ private struct RefcountedStream: ~Copyable {
     init(seed: UInt64, census: Model.Census) {
         var rng = Model.Random(seed: seed)
         let capacity = 2 + rng.below(11)
-        self.store = Slots<Item>.create(slotCapacity: Index<Item>.Count(UInt(capacity)))
+        self.store = Slots<Item>.create(slotCapacity: typedCount(capacity))
         self.model = Reference(capacity: capacity)
         self.rng = rng
         self.verdict = Model.Verdict(seed: seed)
@@ -380,7 +380,7 @@ extension RefcountedStream {
     mutating func growStore() {
         let target = model.capacity + 1 + rng.below(6)
         verdict.record("grow \(model.capacity)→\(target)")
-        store.grow(to: Index<Item>.Count(UInt(target)))
+        store.grow(to: typedCount(target))
         model.grow(to: target)
     }
 
@@ -393,10 +393,10 @@ extension RefcountedStream {
 
     func audit() -> [String] {
         var findings: [String] = []
-        if store.count != Index<Item>.Count(UInt(model.liveCount)) {
+        if store.count != typedCount(model.liveCount) {
             findings.append("count: store \(store.count), model \(model.liveCount)")
         }
-        if store.capacity != Index<Item>.Count(UInt(model.capacity)) {
+        if store.capacity != typedCount(model.capacity) {
             findings.append("capacity: store \(store.capacity), model \(model.capacity)")
         }
         for entry in model.live {
@@ -470,7 +470,7 @@ private struct MoveOnlyStream: ~Copyable {
         var rng = Model.Random(seed: seed)
         let capacity = 2 + rng.below(11)
         self.store = Slots<Model.Element.Tracked>.create(
-            slotCapacity: Index<Model.Element.Tracked>.Count(UInt(capacity))
+            slotCapacity: typedCount(capacity)
         )
         self.model = Reference(capacity: capacity)
         self.rng = rng
@@ -549,7 +549,7 @@ extension MoveOnlyStream {
     mutating func growStore() {
         let target = model.capacity + 1 + rng.below(6)
         verdict.record("grow \(model.capacity)→\(target)")
-        store.grow(to: Index<Model.Element.Tracked>.Count(UInt(target)))
+        store.grow(to: typedCount(target))
         model.grow(to: target)
     }
 
@@ -562,10 +562,10 @@ extension MoveOnlyStream {
 
     func audit() -> [String] {
         var findings: [String] = []
-        if store.count != Index<Model.Element.Tracked>.Count(UInt(model.liveCount)) {
+        if store.count != typedCount(model.liveCount) {
             findings.append("count: store \(store.count), model \(model.liveCount)")
         }
-        if store.capacity != Index<Model.Element.Tracked>.Count(UInt(model.capacity)) {
+        if store.capacity != typedCount(model.capacity) {
             findings.append("capacity: store \(store.capacity), model \(model.capacity)")
         }
         for entry in model.live {
@@ -702,18 +702,18 @@ extension `Storage.Generational Model`.Integration {
 extension `Storage.Generational Model`.Unit {
     @Test
     func `grow preserves live handles, stale handles, and the incarnation history`() {
-        var store = Slots<Int>.create(slotCapacity: 3)
+        var store = Slots<Int>.create(slotCapacity: typedCount(3))
         let a = store.insert(10)
         let b = store.insert(20)
         let c = store.insert(30)
         _ = store.remove(b)
 
-        store.grow(to: Index<Int>.Count(8))
+        store.grow(to: typedCount(8))
 
         let capacity = store.capacity
-        #expect(capacity == Index<Int>.Count(8))
+        #expect(capacity == typedCount(8))
         let count = store.count
-        #expect(count == Index<Int>.Count(2))
+        #expect(count == typedCount(2))
         let aLives = store.contains(a)
         let cLives = store.contains(c)
         #expect(aLives)
@@ -740,7 +740,7 @@ extension `Storage.Generational Model`.Unit {
 
     @Test
     func `generation continuity across reuse: the capacity-1 forced cycle`() {
-        var store = Slots<Int>.create(slotCapacity: 1)
+        var store = Slots<Int>.create(slotCapacity: typedCount(1))
         let first = store.insert(1)
         #expect(first.generation == 0)
         let one = store.remove(first)
@@ -762,7 +762,7 @@ extension `Storage.Generational Model`.`Edge Case` {
     func `a stale handle over a REUSED slot never aliases the new occupant`() {
         let census = Model.Census()
         do {
-            var store = Slots<Model.Element.Tracked>.create(slotCapacity: 1)
+            var store = Slots<Model.Element.Tracked>.create(slotCapacity: typedCount(1))
             let first = store.insert(Model.Element.Tracked(id: 1, census: census))
             if let removed = store.remove(first) {
                 let id = removed.id
@@ -784,7 +784,7 @@ extension `Storage.Generational Model`.`Edge Case` {
 
     @Test
     func `removeAll stales everything; reuse mints at bumped generations`() {
-        var store = Slots<Int>.create(slotCapacity: 4)
+        var store = Slots<Int>.create(slotCapacity: typedCount(4))
         let handles = [store.insert(0), store.insert(1), store.insert(2)]
         store.removeAll()
         let empty = store.isEmpty
@@ -801,17 +801,17 @@ extension `Storage.Generational Model`.`Edge Case` {
 
     @Test
     func `the capacity boundary: remove-then-insert cycles at full`() {
-        var store = Slots<Int>.create(slotCapacity: 2)
+        var store = Slots<Int>.create(slotCapacity: typedCount(2))
         let a = store.insert(1)
         _ = store.insert(2)
         let count = store.count
-        #expect(count == Index<Int>.Count(2))
+        #expect(count == typedCount(2))
         let freed = store.remove(a)
         #expect(freed == 1)
         let replacement = store.insert(3)
         #expect(replacement.index == a.index)
         #expect(replacement.generation == a.generation + 1)
         let full = store.count
-        #expect(full == Index<Int>.Count(2))
+        #expect(full == typedCount(2))
     }
 }
