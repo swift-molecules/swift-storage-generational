@@ -20,6 +20,10 @@ let package = Package(
     ],
     dependencies: [
         .package(
+            url: "https://github.com/swift-atoms/swift-store.git",
+            branch: "main"
+        ),
+        .package(
             url: "https://github.com/swift-atoms/swift-storage.git",
             branch: "main"
         ),
@@ -54,7 +58,14 @@ let package = Package(
             name: "Storage Generational",
             dependencies: [
                 .product(name: "Storage", package: "swift-storage"),
+                .product(name: "Store", package: "swift-store"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(name: "Index", package: "swift-index"),
+                                .product(name: "Cardinal Carrier", package: "swift-cardinal"),
+                .product(
+                    name: "Cardinal Standard Library Integration",
+                    package: "swift-cardinal"
+                ),
                 .product(name: "Ordinal", package: "swift-ordinal"),
                 .product(
                     name: "Ordinal Standard Library Integration",
@@ -72,7 +83,7 @@ let package = Package(
                     package: "swift-memory-allocation"
                 ),
                 .product(
-                    name: "Memory Pool",
+                    name: "Memory Allocator Pool",
                     package: "swift-memory-allocation"
                 ),
             ]
@@ -81,6 +92,12 @@ let package = Package(
         .testTarget(
             name: "Storage Generational Tests",
             dependencies: [
+                .product(
+                    name: "Memory Allocator Pool",
+                    package: "swift-memory-allocation"
+                ),
+                .product(name: "Store", package: "swift-store"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 "Storage Generational",
                 .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Index", package: "swift-index"),

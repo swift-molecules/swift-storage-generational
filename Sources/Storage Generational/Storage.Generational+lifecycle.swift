@@ -1,9 +1,13 @@
 public import Cardinal
+public import Cardinal_Carrier
+public import Cardinal_Standard_Library_Integration
 public import Index
 public import Memory
+public import Memory_Allocator_Pool
 public import Memory_Pool
 public import Memory_Allocator
-import Ordinal_Standard_Library_Integration
+public import Ordinal
+public import Ordinal_Standard_Library_Integration
 public import Tagged
 
 extension Storage.Generational where Allocation: ~Copyable, Element: ~Copyable {
