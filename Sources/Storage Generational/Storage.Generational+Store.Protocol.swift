@@ -1,5 +1,5 @@
 public import Index
-public import Memory_Allocator_Pool
+public import Memory_Pool
 import Ordinal_Standard_Library_Integration
 public import Storage
 

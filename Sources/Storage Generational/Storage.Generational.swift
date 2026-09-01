@@ -1,8 +1,8 @@
 public import Cardinal
 public import Index
 public import Memory
-public import Memory_Allocator_Pool
-public import Memory_Allocator_Primitive
+public import Memory_Pool
+public import Memory_Allocator
 import Ordinal_Standard_Library_Integration
 public import Storage
 public import Tagged

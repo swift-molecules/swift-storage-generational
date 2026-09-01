@@ -1,7 +1,7 @@
 import Cardinal
 import Index
 import Memory
-import Memory_Allocator_Primitive
+import Memory_Allocator
 import Storage_Generational
 import Storage
 import Tagged
