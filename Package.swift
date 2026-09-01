@@ -32,10 +32,6 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-ordinal-comparison.git",
-            branch: "main"
-        ),
-        .package(
             url: "https://github.com/swift-atoms/swift-memory.git",
             branch: "main"
         ),
@@ -66,7 +62,7 @@ let package = Package(
                 ),
                 .product(
                     name: "Ordinal Comparison",
-                    package: "swift-ordinal-comparison"
+                    package: "swift-ordinal"
                 ),
                 .product(name: "Memory", package: "swift-memory"),
                 .product(name: "Cardinal", package: "swift-cardinal"),
