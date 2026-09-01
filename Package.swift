@@ -19,6 +19,7 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-atoms/swift-buffer.git", branch: "main"),
         .package(
             url: "https://github.com/swift-atoms/swift-store.git",
             branch: "main"
@@ -58,6 +59,7 @@ let package = Package(
             name: "Storage Generational",
             dependencies: [
                 .product(name: "Storage", package: "swift-storage"),
+                .product(name: "Buffer Protocol", package: "swift-buffer"),
                 .product(name: "Store", package: "swift-store"),
                 .product(name: "Store Protocol", package: "swift-store"),
                 .product(name: "Index", package: "swift-index"),
